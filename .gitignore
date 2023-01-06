@@ -1,1 +1,7 @@
 datasets/
+bandit_simulations/
+__pycache__/
+*.pyc
+*.sh
+*.gsheet
+*.out

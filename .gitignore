@@ -1,6 +1,9 @@
 datasets/
 bandit_simulations/
+.ipynb_checkpoints/
 __pycache__/
+*.ipynb_checkpoints/
+
 *.pyc
 *.sh
 *.gsheet

@@ -4,13 +4,18 @@ from cfg import get_cfg
 cfg = get_cfg()     
 
 class eGreedyMAB:
-    def __init__(self, n_arms, alpha=cfg.alpha):
+    def __init__(self, n_arms, alpha=cfg.alpha, initial=cfg.initial):
         self.n_arms = n_arms
         self.alpha = alpha
+        self.initial = initial          # set to None by default
         
     def initialize(self, epsilon):
         self.counts = np.zeros(self.n_arms)
-        self.returns = np.zeros(self.n_arms)
+        self.returns = np.zeros(self.n_arms) + self.initial
+        if self.initial > 0:
+            print(f"Optimistic bandit")
+        else:
+            print(f"Naive bandit")
         self.epsilon = epsilon
     
     def choose(self):

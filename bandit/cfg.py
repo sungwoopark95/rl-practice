@@ -8,6 +8,8 @@ def get_cfg():
     parser.add_argument("--bernoulli", action='store_true')
     parser.add_argument("--n_arms", type=int, default=2)
     parser.add_argument("--alpha", type=float, default=1.)
+    parser.add_argument("--initial", type=float, default=0.)
+    
     parser.add_argument("--model", type=str, 
                         choices=['mab', 'linucb', 'hybridlinucb'], 
                         default='mab')

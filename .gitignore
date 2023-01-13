@@ -9,3 +9,4 @@ __pycache__/
 *.gsheet
 *.out
 *.pkl
+*.pdf

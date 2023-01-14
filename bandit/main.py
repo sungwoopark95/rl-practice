@@ -71,6 +71,12 @@ def run(nsim, nsteps, learner, epsilon, arms, optimal_arm):
 if __name__ == "__main__":
     cfg = get_cfg()
     
+    if cfg.initial > 0:
+        mode = "Optimistic"
+    else:
+        mode = "Naive"
+    print(f"{mode} bandit")
+    
     if cfg.model == 'mab':
         if cfg.bernoulli:
             mus = np.linspace(start=1, stop=10, num=20)
@@ -99,6 +105,6 @@ if __name__ == "__main__":
             results.append(result)
 
     ## save point
-    with open(f"./{learner.__class__.__name__}_{cfg.nsim}_{cfg.nsteps}_{arms[0].__class__.__name__}_{cfg.alpha}_results.pkl", "wb") as f:
+    with open(f"./{learner.__class__.__name__}_{cfg.nsim}_{cfg.nsteps}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl", "wb") as f:
         pickle.dump(results, file=f, protocol=pickle.HIGHEST_PROTOCOL)
     

@@ -56,7 +56,6 @@ class UCB(Bandit):
     def initialize(self):
         self.counts = np.zeros(self.n_arms)
         self.returns = np.array([np.inf for _ in range(self.n_arms)], dtype='float')
-        self.rounds = 0
     
     def choose(self):
         argmaxes = np.where(self.returns == np.max(self.returns))[0]
@@ -64,16 +63,14 @@ class UCB(Bandit):
         return idx
     
     def update(self, action, reward):
-        self.counts[action] += 1
-        
-        if self.rounds == 0:
+        if self.counts[action] == 0:
             value = 0.
         else:
             value = self.returns[action]
+        
+        self.counts[action] += 1
         
         step = self.counts.sum()
         ucb = self.conf * np.sqrt(np.log(step)/self.counts[action])
         new_value = ((value + reward) / self.counts[action]) + ucb
         self.returns[action] = new_value
-        
-        self.rounds += 1

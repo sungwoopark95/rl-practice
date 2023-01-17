@@ -9,9 +9,10 @@ def get_cfg():
     parser.add_argument("--n_arms", type=int, default=2)
     parser.add_argument("--alpha", type=float, default=1.)
     parser.add_argument("--initial", type=float, default=0.)
+    parser.add_argument("--conf", type=float, default=2.)
     
     parser.add_argument("--model", type=str, 
-                        choices=['mab', 'linucb', 'hybridlinucb'], 
+                        choices=['mab', 'linucb', 'hybridlinucb', 'ucb'], 
                         default='mab')
     
     return parser.parse_args()

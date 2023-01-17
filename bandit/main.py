@@ -1,8 +1,7 @@
-import random
 import numpy as np
 import pandas as pd
 from cfg import get_cfg
-from mab import eGreedyMAB
+from mab import eGreedyMAB, UCB
 from linucb import LinUCB, HybridLinUCB
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -29,7 +28,7 @@ class GaussianArm:
         return np.random.normal(loc=self.mu, scale=self.sigma)
 
 
-def run(nsim, nsteps, learner, epsilon, arms, optimal_arm):
+def run(nsim, nsteps, learner, arms, optimal_arm):   
     epsilons = []
     epochs = []
     runs = []
@@ -43,12 +42,12 @@ def run(nsim, nsteps, learner, epsilon, arms, optimal_arm):
         bar = range(nsim)
     
     for sim in bar:
-        learner.initialize(epsilon)
+        learner.initialize()
         for step in range(nsteps):
             chosen_arm = learner.choose()
             reward = arms[chosen_arm].draw()
             
-            epsilons.append(epsilon)
+            epsilons.append(learner.epsilon)
             epochs.append(sim)
             runs.append(step)
             chosen_arms.append(chosen_arm)
@@ -69,42 +68,55 @@ def run(nsim, nsteps, learner, epsilon, arms, optimal_arm):
 
 
 if __name__ == "__main__":
+    np.random.seed(2023)
     cfg = get_cfg()
     
     if cfg.initial > 0:
         mode = "Optimistic"
     else:
         mode = "Naive"
-    print(f"{mode} bandit")
+    print(f"{mode} {cfg.model} bandit")
+
+    if cfg.bernoulli:
+        mus = np.linspace(start=1, stop=10, num=20)
+        mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
+        mus = np.around(mus / 10., decimals=2)
+        arms = [BernoulliArm(p) for p in mus]
+        optimal_arm = np.argmax(mus)
+        print(f"Action profile: {[arm.p for arm in arms]}")
+        print(f"Optimal arm: {optimal_arm}")
     
+    else:
+        mus = np.arange(15)
+        mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
+        arms = [GaussianArm(mu=mu, sigma=1) for mu in mus]
+        optimal_arm = np.argmax(mus)
+        print(f"Action profile: {mus}")
+        print(f"Optimal arm: {optimal_arm}")
+
     if cfg.model == 'mab':
-        if cfg.bernoulli:
-            mus = np.linspace(start=1, stop=10, num=20)
-            mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
-            mus = np.around(mus / 10., decimals=2)
-            arms = [BernoulliArm(p) for p in mus]
-            optimal_arm = np.argmax(mus)
-            print(f"Action profile: {[arm.p for arm in arms]}")
-            print(f"Optimal arm: {optimal_arm}")
-        
-        else:
-            mus = np.arange(15)
-            mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
-            arms = [GaussianArm(mu=mu, sigma=1) for mu in mus]
-            optimal_arm = np.argmax(mus)
-            print(f"Action profile: {mus}")
-            print(f"Optimal arm: {optimal_arm}")
-        
         epsilon_candidates = np.linspace(start=0.001, stop=0.999, num=100)
-        epsilons = np.append(np.random.choice(epsilon_candidates, size=6, replace=False), [0., 1.])
+        epsilons = np.append(np.random.choice(epsilon_candidates, size=5, replace=False), [0., 1.])
         epsilons = np.sort(np.around(epsilons, decimals=3))
+        
         results = []
         for eps in epsilons:
-            learner = eGreedyMAB(n_arms=cfg.n_arms, alpha=cfg.alpha)
-            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, epsilon=eps, arms=arms, optimal_arm=optimal_arm)
+            learner = eGreedyMAB(n_arms=cfg.n_arms, epsilon=eps, alpha=cfg.alpha, initial=cfg.initial)
+            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
+            results.append(result)
+            
+    elif cfg.model == 'ucb':
+        conf_candidates = np.linspace(start=0., stop=3., num=100)
+        confs = np.random.choice(conf_candidates, size=5, replace=False)
+        confs = np.sort(np.around(confs, decimals=3))
+        
+        results = []
+        for conf in confs:
+            learner = UCB(n_arms=cfg.n_arms, alpha=cfg.alpha, initial=cfg.initial, conf=conf)
+            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
             results.append(result)
 
     ## save point
-    with open(f"./{learner.__class__.__name__}_{cfg.nsim}_{cfg.nsteps}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl", "wb") as f:
+    with open(f"./{learner.__class__.__name__}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl", "wb") as f:
         pickle.dump(results, file=f, protocol=pickle.HIGHEST_PROTOCOL)
     

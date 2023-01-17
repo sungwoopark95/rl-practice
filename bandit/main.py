@@ -48,8 +48,10 @@ def run(nsim, nsteps, learner, arms, optimal_arm):
 
 
 if __name__ == "__main__":
-    np.random.seed(2023)
     cfg = get_cfg()
+    
+    if cfg.seed:
+        np.random.seed(2023)
     
     if cfg.initial > 0:
         mode = "Optimistic"

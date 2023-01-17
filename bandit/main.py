@@ -8,13 +8,16 @@ from tqdm import tqdm
 import pickle
 
 
-def run(nsim, nsteps, learner, arms, optimal_arm):   
-    epsilons = []
+def run(nsim, nsteps, learner, arms, optimal_arm, is_ucb=True):   
     epochs = []
     runs = []
     chosen_arms = []
     optimal_arms = []
     rewards = []
+    if is_ucb:
+        confs = []
+    else:
+        epsilons = []
     
     if cfg.tqdm:
         bar = tqdm(range(nsim))
@@ -26,8 +29,11 @@ def run(nsim, nsteps, learner, arms, optimal_arm):
         for step in range(nsteps):
             chosen_arm = learner.choose()
             reward = arms[chosen_arm].draw()
-            
-            epsilons.append(learner.epsilon)
+                
+            if is_ucb:
+                confs.append(learner.conf)
+            else:
+                epsilons.append(learner.epsilon)
             epochs.append(sim)
             runs.append(step)
             chosen_arms.append(chosen_arm)
@@ -36,14 +42,24 @@ def run(nsim, nsteps, learner, arms, optimal_arm):
             
             learner.update(chosen_arm, reward)
     
-    result = pd.DataFrame({
-        'epsilon': epsilons,
-        'sim': epochs,
-        'step': runs,
-        'chosen_arm': chosen_arms,
-        'optimal_arm': optimal_arms,
-        'reward': rewards
-    })
+    if is_ucb:
+        result = pd.DataFrame({
+            'conf': confs,
+            'sim': epochs,
+            'step': runs,
+            'chosen_arm': chosen_arms,
+            'optimal_arm': optimal_arms,
+            'reward': rewards
+        })
+    else:
+        result = pd.DataFrame({
+            'epsilon': epsilons,
+            'sim': epochs,
+            'step': runs,
+            'chosen_arm': chosen_arms,
+            'optimal_arm': optimal_arms,
+            'reward': rewards
+        })
     return result.reset_index(drop=True)
 
 
@@ -78,20 +94,16 @@ if __name__ == "__main__":
 
 
     if cfg.model == 'mab':
-        epsilon_candidates = np.linspace(start=0.001, stop=0.999, num=100)
-        epsilons = np.append(np.random.choice(epsilon_candidates, size=5, replace=False), [0., 1.])
-        epsilons = np.sort(np.around(epsilons, decimals=3))
+        epsilons = [0., 0.01, 0.1, 0.3, 0.5, 1.0]
         
         results = []
         for eps in epsilons:
             learner = eGreedyMAB(n_arms=cfg.n_arms, epsilon=eps, alpha=cfg.alpha, initial=cfg.initial)
-            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
+            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm, is_ucb=False)
             results.append(result)
             
     elif cfg.model == 'ucb':
-        conf_candidates = np.linspace(start=0., stop=3., num=100)
-        confs = np.random.choice(conf_candidates, size=5, replace=False)
-        confs = np.sort(np.around(confs, decimals=3))
+        confs = [0., 0.5, 1.0, 2.0, 3.0]
         
         results = []
         for conf in confs:

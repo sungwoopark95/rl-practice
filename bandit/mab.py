@@ -29,7 +29,7 @@ class eGreedyMAB(Bandit):
         self.epsilon_ = self.epsilon
     
     def choose(self):
-        if np.random.random() > self.epsilon:
+        if np.random.random() > self.epsilon_:
             argmaxes = np.where(self.returns == np.max(self.returns))[0]
             idx = np.random.choice(argmaxes)
         else:
@@ -45,7 +45,7 @@ class eGreedyMAB(Bandit):
         new_value = (value + reward) / self.counts[action]
         self.returns[action] = new_value
         
-        self.epsilon *= self.alpha
+        self.epsilon_ *= self.alpha
         
 
 class UCB(Bandit):

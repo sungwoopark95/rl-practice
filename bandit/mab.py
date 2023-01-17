@@ -1,9 +1,21 @@
 import numpy as np
+from abc import ABC, abstractmethod
 from cfg import get_cfg
 
-cfg = get_cfg()     
+cfg = get_cfg()    
 
-class eGreedyMAB:
+class Bandit(ABC):
+    @abstractmethod
+    def initialize(self): pass
+    
+    @abstractmethod
+    def choose(self): pass
+    
+    @abstractmethod
+    def update(self, action, reward): pass
+
+
+class eGreedyMAB(Bandit):
     def __init__(self, n_arms, epsilon, alpha=cfg.alpha, initial=cfg.initial):
         self.n_arms = n_arms
         self.alpha = alpha
@@ -35,11 +47,15 @@ class eGreedyMAB:
         self.epsilon *= self.alpha
         
 
-class UCB(eGreedyMAB):
-    def __init__(self, n_arms, epsilon=0., alpha=cfg.alpha, initial=cfg.initial, conf=cfg.conf):
-        super().__init__(n_arms, epsilon, alpha, initial)
+class UCB(Bandit):
+    def __init__(self, n_arms, conf=cfg.conf):
+        self.n_arms = n_arms
         self.conf = conf
-        
+    
+    def initialize(self):
+        self.counts = np.zeros(self.n_arms)
+        self.returns = np.array([np.inf for _ in range(self.n_arms)], dtype='float')
+    
     def choose(self):
         argmaxes = np.where(self.returns == np.max(self.returns))[0]
         idx = np.random.choice(argmaxes)

@@ -112,7 +112,7 @@ if __name__ == "__main__":
         
         results = []
         for conf in confs:
-            learner = UCB(n_arms=cfg.n_arms, alpha=cfg.alpha, initial=cfg.initial, conf=conf)
+            learner = UCB(n_arms=cfg.n_arms, conf=cfg.conf)
             result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
             results.append(result)
 

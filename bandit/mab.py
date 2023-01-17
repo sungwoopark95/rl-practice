@@ -4,6 +4,7 @@ from cfg import get_cfg
 
 cfg = get_cfg()    
 
+
 class Bandit(ABC):
     @abstractmethod
     def initialize(self): pass
@@ -55,6 +56,7 @@ class UCB(Bandit):
     def initialize(self):
         self.counts = np.zeros(self.n_arms)
         self.returns = np.array([np.inf for _ in range(self.n_arms)], dtype='float')
+        self.rounds = 0
     
     def choose(self):
         argmaxes = np.where(self.returns == np.max(self.returns))[0]
@@ -64,8 +66,14 @@ class UCB(Bandit):
     def update(self, action, reward):
         self.counts[action] += 1
         
-        value = self.returns[action]
+        if self.rounds == 0:
+            value = 0.
+        else:
+            value = self.returns[action]
+        
         step = self.counts.sum()
         ucb = self.conf * np.sqrt(np.log(step)/self.counts[action])
         new_value = ((value + reward) / self.counts[action]) + ucb
         self.returns[action] = new_value
+        
+        self.rounds += 1

@@ -3,29 +3,9 @@ import pandas as pd
 from cfg import get_cfg
 from mab import eGreedyMAB, UCB
 from linucb import LinUCB, HybridLinUCB
-import matplotlib.pyplot as plt
+from arms import BernoulliArm, GaussianArm
 from tqdm import tqdm
 import pickle
-
-
-class BernoulliArm:
-    def __init__(self, p):
-        self.p = p
-    
-    def draw(self):
-        if np.random.random() > self.p:
-            return 0.0
-        else:
-            return 1.0
-        
-
-class GaussianArm:
-    def __init__(self, mu, sigma):
-        self.mu = mu
-        self.sigma = sigma
-        
-    def draw(self):
-        return np.random.normal(loc=self.mu, scale=self.sigma)
 
 
 def run(nsim, nsteps, learner, arms, optimal_arm):   
@@ -94,6 +74,7 @@ if __name__ == "__main__":
         print(f"Action profile: {mus}")
         print(f"Optimal arm: {optimal_arm}")
 
+
     if cfg.model == 'mab':
         epsilon_candidates = np.linspace(start=0.001, stop=0.999, num=100)
         epsilons = np.append(np.random.choice(epsilon_candidates, size=5, replace=False), [0., 1.])
@@ -115,6 +96,7 @@ if __name__ == "__main__":
             learner = UCB(n_arms=cfg.n_arms, conf=cfg.conf)
             result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
             results.append(result)
+
 
     ## save point
     with open(f"./{learner.__class__.__name__}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl", "wb") as f:

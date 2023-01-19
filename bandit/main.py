@@ -4,7 +4,7 @@ from cfg import get_cfg
 from mab import eGreedyMAB, UCB
 from linucb import LinUCB, HybridLinUCB
 from arms import BernoulliArm, GaussianArm
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import pickle
 
 
@@ -103,11 +103,11 @@ if __name__ == "__main__":
             results.append(result)
             
     elif cfg.model == 'ucb':
-        confs = [0., 0.5, 1.0, 2.0, 3.0]
+        confs = [0.5, 1.0, 2.0, 3.0, 4.0]
         
         results = []
         for conf in confs:
-            learner = UCB(n_arms=cfg.n_arms, conf=cfg.conf)
+            learner = UCB(n_arms=cfg.n_arms, conf=conf)
             result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
             results.append(result)
 

@@ -42,7 +42,8 @@ class eGreedyMAB(Bandit):
         self.counts[action] += 1
         
         value = self.returns[action]
-        new_value = (value + reward) / self.counts[action]
+        n = self.counts[action]
+        new_value = (((n-1)/n)*value) + ((1/n)*reward)
         self.returns[action] = new_value
         
         self.epsilon_ *= self.alpha
@@ -56,6 +57,7 @@ class UCB(Bandit):
     def initialize(self):
         self.counts = np.zeros(self.n_arms)
         self.returns = np.array([np.inf for _ in range(self.n_arms)], dtype='float')
+        self.step = 0
     
     def choose(self):
         argmaxes = np.where(self.returns == np.max(self.returns))[0]
@@ -69,8 +71,8 @@ class UCB(Bandit):
             value = self.returns[action]
         
         self.counts[action] += 1
-        
-        step = self.counts.sum()
-        ucb = self.conf * np.sqrt(np.log(step)/self.counts[action])
-        new_value = ((value + reward) / self.counts[action]) + ucb
+        self.step += 1
+        n = self.counts[action]
+        ucb = self.conf * np.sqrt(np.log(self.step)/n)
+        new_value = (((n-1)/n)*value) + ((1/n)*reward) + ucb
         self.returns[action] = new_value

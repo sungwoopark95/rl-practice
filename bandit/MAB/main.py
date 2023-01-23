@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from cfg import get_cfg
 from mab import eGreedyMAB, UCB
-from linucb import LinUCB, HybridLinUCB
 from arms import BernoulliArm, GaussianArm
 from tqdm.auto import tqdm
 import pickle

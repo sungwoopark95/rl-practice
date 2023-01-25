@@ -4,21 +4,6 @@ from tqdm.auto import tqdm
 from data import get_data
 from cfg import get_cfg
 
-cfg = get_cfg()
-
-users, movies, ratings = get_data("users"), get_data("movies"), get_data("ratings")
-
-topN = cfg.topN
-top_movies = ratings[["movieid", "userid"]].groupby(by="movieid").count().sort_values(by=["userid"], ascending=False)
-top_movies.reset_index(drop=False, inplace=True)
-
-top_n_movies = movies[movies['movieid'].isin(top_movies.head(topN)['movieid'])]
-top_n_movies.sort_values(by='movieid', inplace=True)
-top_n_movies.reset_index(drop=True, inplace=True)
-
-top_n_ratings = ratings[ratings['movieid'].isin(top_n_movies['movieid'])]
-top_n_ratings.reset_index(drop=True, inplace=True)
-
 def run(learner, data, arms, users, nsim):
     aligned_ctr = []
     aligned_timestep = 0
@@ -60,6 +45,23 @@ def run(learner, data, arms, users, nsim):
     }
 
 if __name__ == "__main__":
+    ## prepare data and preprocess
+    cfg = get_cfg()
+
+    users, movies, ratings = get_data("users"), get_data("movies"), get_data("ratings")
+
+    topN = cfg.topN
+    top_movies = ratings[["movieid", "userid"]].groupby(by="movieid").count().sort_values(by=["userid"], ascending=False)
+    top_movies.reset_index(drop=False, inplace=True)
+
+    top_n_movies = movies[movies['movieid'].isin(top_movies.head(topN)['movieid'])]
+    top_n_movies.sort_values(by='movieid', inplace=True)
+    top_n_movies.reset_index(drop=True, inplace=True)
+
+    top_n_ratings = ratings[ratings['movieid'].isin(top_n_movies['movieid'])]
+    top_n_ratings.reset_index(drop=True, inplace=True)    
+
+    ## prepare for training
     arm_to_use = top_n_movies.iloc[:, 1:].to_numpy()
     arm_features = movies.shape[1] - 1
     user_features = users.shape[1] - 1
@@ -67,6 +69,7 @@ if __name__ == "__main__":
     reward_mean = top_n_ratings["reward"].mean()
     print(f"Mean reward: {reward_mean}")
     
+    ## training
     if cfg.model.lower() == "linucb":
         learner = LinUCB(arms=arm_to_use, d=d, alpha=cfg.alpha)
         print(learner.__class__.__name__)
@@ -104,7 +107,9 @@ if __name__ == "__main__":
     if cfg.save_plot:
         plt.figure(figsize=(7, 5))
         plt.plot(result['aligned_ctr'])
-        plt.title(f"{learner.__class__.__name__}_alpha={cfg.alpha}")
+        plt.axhline(y=reward_mean, color="red")
+        plt.ylim([reward_mean-0.3, 1.05])
+        plt.title(f"{learner.__class__.__name__}_top{cfg.topN}_alpha={cfg.alpha}")
         plt.grid(True)
-        plt.show()
-        plt.savefig(f"./{cfg.model}.png")
+        plt.savefig(f"./{cfg.model}_top{cfg.topN}_alpha_{cfg.alpha}_nsim_{cfg.nsim}.png")
+        print("Saved plot successfully!")

@@ -41,7 +41,6 @@ class LinUCB(ContextualBandit):
 
         max_p = np.max(self.ps)
         tie = np.where(self.ps == max_p)[0]
-
         return np.random.choice(tie)
 
     def update(self, x, a, r):
@@ -84,11 +83,9 @@ class HybridLinUCB(ContextualBandit):
         alpha: hyper-parameter that determines degree of exploration
         k: dimension of the shared parameter -> l (arm feature) * (d-l) (user feature)
         """
-        
         self.arms = arms
         self.n_arms = arms.shape[0]
-        self.d = d
-        self.k = k
+        self.d, self.k = d, k
         self.alpha = alpha
         self.A_node = np.identity(k)                                   # A_node = k x k
         self.b_node = np.zeros(shape=(k, 1))                           # B_node = k x 1
@@ -103,7 +100,7 @@ class HybridLinUCB(ContextualBandit):
         return: index of arm which yields the highest payoff
         """
         A_node_inv = np.linalg.inv(self.A_node)
-        beta_hat = A_node_inv @ self.b_node   # beta_hat = k x 1 array
+        beta_hat = A_node_inv @ self.b_node                     # beta_hat = k x 1 array
         for i in range(self.n_arms):
             arm_feat = self.arms[i]
             x_ta = np.append(arm_feat, x).reshape((-1, 1))      # x_ta = d x 1

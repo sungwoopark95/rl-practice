@@ -9,69 +9,89 @@ warnings.filterwarnings('ignore')
 ## process movielens-1m data
 DATA = ["movies", "ratings", "users"]
 
-def get_data(name:str, test_ratio=.2, drop_time=False):
+def get_data(name:str, test_ratio=.2):
     assert name in DATA
     if name == "movies":
-        movies = pd.read_csv("/home/sungwoopark/rl-practice/bandit/linucb/datasets/movies.csv")
+        movies = pd.read_csv("/home/sungwoopark/rl-practice/bandit/LinUCB/datasets/movies.csv")
         movies.drop('title', axis=1, inplace=True)
         
-        ## preprocessing to get only genres
-        unique_genres = list(movies['genre'].unique())
         genres = []
-        for item in unique_genres:
-            split = item.split(', ')
-            for jtem in split:
-                if jtem not in genres:
-                    genres.append(jtem)
-                    
-        df = pd.DataFrame(columns=['movieid']+genres)
         for i in range(movies.shape[0]):
-            data = dict()
-            row = movies.iloc[i]
-            data['movieid'] = row['movieid']
-            row_genre = row['genre'].split(', ')
-            for g in genres:
-                if g in row_genre:
-                    data[g] = 1
-                else:
-                    data[g] = 0
-            df = df.append(data, ignore_index=True)
+            genre_string = movies['genre'].iloc[i]
+            genre_split = genre_string.split(', ')
+            for g in genre_split:
+                if g not in genres:
+                    genres.append(g)
+        genres = sorted(genres)
+        
+        ## genre one-hot
+        genre_onehot = np.zeros(shape=(movies.shape[0], len(genres)), dtype=np.uint8)
+        for i in range(movies.shape[0]):
+            g_split = movies['genre'].iloc[i].split(', ')
+            for g in g_split:
+                idx = genres.index(g)
+                genre_onehot[i, idx] = 1
+
+        for j in range(len(genres)):
+            genre_name = genres[j]
+            movies[f"is_{genre_name}"] = genre_onehot[:, j]
+
+        movies.drop('genre', axis=1, inplace=True)
+        
+        df = movies
     
     elif name == "users":
-        user = pd.read_csv("/home/sungwoopark/rl-practice/bandit/linucb/datasets/users.csv")
-        user.drop("zipcode", axis=1, inplace=True)
+        users = pd.read_csv("/home/sungwoopark/rl-practice/bandit/LinUCB/datasets/users.csv")
+        users.drop("zipcode", axis=1, inplace=True)
         
         ## preprocessing
+        # gender
+        users['gender'] = users['gender'].map(lambda x: 1 if x == "F" else 0)
+        
+        # age
         bins = [0, 20, 30, 40, 50, 60, np.inf]
         names = ['<20', '20-29', '30-39','40-49', '51-60', '60+']
-        user['agegroup'] = pd.cut(user['age'], bins=bins, labels=names)
-        user.drop("age", axis=1, inplace=True)
+        labels = [i for i in range(len(names))]
+        name_label = dict()
+        for name, label in zip(names, labels):
+            name_label[name] = label
+        users['agegroup'] = pd.cut(users['age'], bins=bins, labels=names)
+        users['agegroup'] = users['agegroup'].map(name_label)
+        users.drop('age', axis=1, inplace=True)
         
-        columnsToEncode = ['agegroup', 'gender', 'occupation']
-        myEncoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
-        myEncoder.fit(user[columnsToEncode])
+        age_onehot = np.zeros(shape=(users.shape[0], users['agegroup'].nunique()), dtype=np.uint8)
+        for i in range(users.shape[0]):
+            group_idx = users['agegroup'].iloc[i]
+            age_onehot[i][group_idx] = 1
+
+        for j in range(users['agegroup'].nunique()):
+            users[f"agegroup_{j}"] = age_onehot[:, j]
+
+        users.drop('agegroup', axis=1, inplace=True)
         
-        df = pd.concat([user.drop(columnsToEncode, 1), 
-                        pd.DataFrame(myEncoder.transform(user[columnsToEncode]), 
-                                     columns = myEncoder.get_feature_names_out(columnsToEncode))], 
-                       axis=1).reindex()
+        # occupation
+        occupation_onehot = np.zeros(shape=(users.shape[0], users['occupation'].nunique()), dtype=np.uint8)
+        for i in range(users.shape[0]):
+            group_idx = users['occupation'].iloc[i]
+            occupation_onehot[i][group_idx] = 1
+
+        for j in range(users['occupation'].nunique()):
+            users[f"occupation_{j}"] = occupation_onehot[:, j]
+
+        users.drop('occupation', axis=1, inplace=True)
+        
+        df = users
     
     else:
-        df = pd.read_csv("/home/sungwoopark/rl-practice/bandit/linucb/datasets/ratings.csv")
+        ratings = pd.read_csv("/home/sungwoopark/rl-practice/bandit/LinUCB/datasets/ratings.csv")
+        ratings.drop('timestamp', axis=1, inplace=True)
         
-        if drop_time:
-            df.drop("timestamp", axis=1, inplace=True)
-        else:
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            df['year'] = df['timestamp'].dt.year
-            df['month'] = df['timestamp'].dt.month
-            df['day'] = df['timestamp'].dt.day
-            df['hour'] = df['timestamp'].dt.hour
-            df['minute'] = df['timestamp'].dt.minute
-            df['second'] = df['timestamp'].dt.second
+        user_mean = ratings[['userid', 'ratings']].groupby(by='userid').mean()
+        user_mean.reset_index(drop=False, inplace=True)
+        ratings = pd.merge(left=ratings, right=user_mean, on='userid', how='left')
+        ratings['reward'] = (ratings['ratings_x'] > ratings['ratings_y']).astype(np.uint8)
+        ratings.drop(['ratings_x', 'ratings_y'], axis=1, inplace=True)
         
-        # mean = df['ratings'].mean()
-        # df['reward'] = df['ratings'].map(lambda x: 1 if x >= mean else 0)
-        # df.drop('ratings', axis=1, inplace=True)
+        df = ratings
         
     return df

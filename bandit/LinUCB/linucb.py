@@ -109,19 +109,19 @@ class HybridLinUCB(ContextualBandit):
             A_a, B_a, b_a = self.As[i], self.Bs[i], self.bs[i]
             A_a_inv = np.linalg.inv(A_a)
             B_a_T, z_ta_T, x_ta_T = B_a.T, z_ta.T, x_ta.T
-            theta_a = A_a_inv @ (b_a-(B_a@beta_hat)) # theta_a = d x 1
+            theta_a = A_a_inv @ (b_a-(B_a@beta_hat))            # theta_a = d x 1
             
-            s = (
+            s = (                                               # s = scalar
                 (z_ta_T @ A_node_inv @ z_ta)
                 - (2*(z_ta_T @ A_node_inv @ B_a_T @ A_a_inv @ x_ta))
                 + (x_ta_T @ A_a_inv @ x_ta)
                 + (x_ta_T @ A_a_inv @ B_a @ A_node_inv @ B_a_T @ A_a_inv @ x_ta)
-            ).item() # scalar
+            ).item()
             
             p = (
                 (z_ta_T @ beta_hat).item() 
                 + (x_ta_T @ theta_a).item()
-                + self.alpha * np.sqrt(s)
+                + (self.alpha * np.sqrt(s))
             )
             self.ps[i] = p
             
@@ -130,7 +130,7 @@ class HybridLinUCB(ContextualBandit):
         return np.random.choice(tie)
     
     def update(self, x, a, r):
-        ## update shared parameter - phase1
+        ## update shared parameter - phase 1
         chosenA, chosenB, chosenb = self.As[a], self.Bs[a], self.bs[a]
         chosenA_inv = np.linalg.inv(chosenA)
         chosenB_T = chosenB.T
@@ -145,7 +145,7 @@ class HybridLinUCB(ContextualBandit):
         chosenB += (x_chosen @ z_chosen.T)
         chosenb += (r * x_chosen)
         
-        ## update shared parameter - phase2
+        ## update shared parameter - phase 2
         chosenA_inv = np.linalg.inv(chosenA)    # update inverse
         chosenB_T = chosenB.T                   # update transpose
         self.A_node += np.outer(z_chosen, z_chosen) - (chosenB_T @ chosenA_inv @ chosenB)

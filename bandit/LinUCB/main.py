@@ -111,5 +111,5 @@ if __name__ == "__main__":
         plt.ylim([reward_mean-0.3, 1.05])
         plt.title(f"{learner.__class__.__name__}_top{cfg.topN}_alpha={cfg.alpha}")
         plt.grid(True)
-        plt.savefig(f"./{cfg.model}_top{cfg.topN}_alpha_{cfg.alpha}_nsim_{cfg.nsim}.png")
+        plt.savefig(f"/home/sungwoopark/rl-practice/bandit/LinUCB/plots/{cfg.model}_top{cfg.topN}_alpha_{cfg.alpha}_nsim_{cfg.nsim}.png")
         print("Saved plot successfully!")

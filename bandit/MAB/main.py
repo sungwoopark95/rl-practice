@@ -75,16 +75,16 @@ if __name__ == "__main__":
     print(f"{mode} {cfg.model} bandit")
 
     if cfg.bernoulli:
-        mus = np.linspace(start=1, stop=10, num=20)
+        mus = np.random.randint(low=0, high=100, size=20)
         mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
-        mus = np.around(mus / 10., decimals=2)
+        mus = np.around(mus / 100., decimals=2)
         arms = [BernoulliArm(p) for p in mus]
         optimal_arm = np.argmax(mus)
         print(f"Action profile: {[arm.p for arm in arms]}")
         print(f"Optimal arm: {optimal_arm}")
     
     else:
-        mus = np.arange(15)
+        mus = np.random.randint(low=-10, high=30, size=20)
         mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
         arms = [GaussianArm(mu=mu, sigma=1) for mu in mus]
         optimal_arm = np.argmax(mus)
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             results.append(result)
             
     elif cfg.model == 'ucb':
-        confs = [0.5, 1.0, 2.0, 3.0, 4.0]
+        confs = [0., 0.5, 1.0, 2.0, 3.0, 4.0]
         
         results = []
         for conf in confs:

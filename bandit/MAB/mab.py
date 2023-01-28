@@ -62,12 +62,13 @@ class UCB(Bandit):
     
     def choose(self):
         self.step += 1
+        log_step = np.log(self.step)
         for i, cnt in enumerate(self.counts):
             if cnt == 0:
                 self.ucbs[i] = np.iinfo(np.int32).max
             else:
-                self.ucbs[i] = np.sqrt(np.log(self.step) / cnt)
-        returns = self.qs + (self.conf*self.ucbs)
+                self.ucbs[i] = self.conf * np.sqrt(log_step / cnt)
+        returns = self.qs + self.ucbs
         argmaxes = np.where(returns == np.max(returns))[0]
         return np.random.choice(argmaxes)
     

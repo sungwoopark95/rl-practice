@@ -75,7 +75,7 @@ if __name__ == "__main__":
     print(f"{mode} {cfg.model} bandit")
 
     if cfg.bernoulli:
-        mus = np.random.randint(low=0, high=100, size=20)
+        mus = np.random.randint(low=0, high=100, size=50)
         mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
         mus = np.around(mus / 100., decimals=2)
         arms = [BernoulliArm(p) for p in mus]
@@ -84,9 +84,9 @@ if __name__ == "__main__":
         print(f"Optimal arm: {optimal_arm}")
     
     else:
-        mus = np.random.randint(low=-10, high=30, size=20)
-        mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
-        arms = [GaussianArm(mu=mu, sigma=1) for mu in mus]
+        mus = np.linspace(start=-5, stop=10, num=100)
+        mus = np.around(np.random.choice(mus, size=cfg.n_arms, replace=False), decimals=2)
+        arms = [GaussianArm(mu=mu, sigma=1.5) for mu in mus]
         optimal_arm = np.argmax(mus)
         print(f"Action profile: {mus}")
         print(f"Optimal arm: {optimal_arm}")

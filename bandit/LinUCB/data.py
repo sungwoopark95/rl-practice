@@ -86,11 +86,12 @@ def get_data(name:str, test_ratio=.2):
         ratings = pd.read_csv("/home/sungwoopark/rl-practice/bandit/LinUCB/datasets/ratings.csv")
         ratings.drop('timestamp', axis=1, inplace=True)
         
-        user_mean = ratings[['userid', 'ratings']].groupby(by='userid').mean()
-        user_mean.reset_index(drop=False, inplace=True)
-        ratings = pd.merge(left=ratings, right=user_mean, on='userid', how='left')
-        ratings['reward'] = (ratings['ratings_x'] > ratings['ratings_y']).astype(np.uint8)
-        ratings.drop(['ratings_x', 'ratings_y'], axis=1, inplace=True)
+        # user_mean = ratings[['userid', 'ratings']].groupby(by='userid').mean()
+        # user_mean.reset_index(drop=False, inplace=True)
+        # ratings = pd.merge(left=ratings, right=user_mean, on='userid', how='left')
+        ratings['reward'] = ratings['ratings'].map(lambda x: 1 if x > 4 else 0)
+        ratings.drop(['ratings'], axis=1, inplace=True)
+        # ratings.drop(['ratings_x', 'ratings_y'], axis=1, inplace=True)
         
         df = ratings
         

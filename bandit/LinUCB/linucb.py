@@ -24,12 +24,16 @@ class LinUCB(ContextualBandit):
         self.As = [np.identity(d) for _ in range(self.n_arms)]         # A = d x d
         self.bs = [np.zeros(shape=(d, 1)) for _ in range(self.n_arms)] # B = (d, 1) array
         self.ps = np.zeros(shape=self.n_arms)
+        
+        self.rounds = 0
            
     def choose(self, x):
         """
         x: (d-l) shaped 1d-array - user feature
         return: index of arm which yields the highest payoff
         """
+        self.rounds += 1
+        print(f"Round {self.rounds}\t A matrix: {self.As}")
         for i in range(self.n_arms):
             arm_feat = self.arms[i]
             A_a, b_a = self.As[i], self.bs[i]

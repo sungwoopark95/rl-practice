@@ -33,7 +33,7 @@ class LinUCB(ContextualBandit):
         return: index of arm which yields the highest payoff
         """
         self.rounds += 1
-        print(f"Round {self.rounds}\t A matrix: {self.As}")
+        print(f"Round {self.rounds}\t A matrix: {self.As[21]}")
         for i in range(self.n_arms):
             arm_feat = self.arms[i]
             A_a, b_a = self.As[i], self.bs[i]

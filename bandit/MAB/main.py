@@ -1,22 +1,19 @@
 import numpy as np
 import pandas as pd
 from cfg import get_cfg
-from mab import eGreedyMAB, UCB
+from mab import eGreedyMAB, UCB, ThompsonSampling
 from arms import BernoulliArm, GaussianArm
 from tqdm.auto import tqdm
 import pickle
 
 
-def run(nsim, nsteps, learner, arms, optimal_arm, is_ucb=True):   
+def run(nsim, nsteps, learner, arms, optimal_arm, is_ucb, is_thompson):
     epochs = []
     runs = []
     chosen_arms = []
     optimal_arms = []
     rewards = []
-    if is_ucb:
-        confs = []
-    else:
-        epsilons = []
+    container = []
     
     if cfg.tqdm:
         bar = tqdm(range(nsim))
@@ -28,11 +25,14 @@ def run(nsim, nsteps, learner, arms, optimal_arm, is_ucb=True):
         for step in range(nsteps):
             chosen_arm = learner.choose()
             reward = arms[chosen_arm].draw()
-                
+            
             if is_ucb:
-                confs.append(learner.conf)
+                container.append(learner.conf)
+            elif is_thompson:
+                pass
             else:
-                epsilons.append(learner.epsilon)
+                container.append(learner.epsilon)
+            
             epochs.append(sim)
             runs.append(step)
             chosen_arms.append(chosen_arm)
@@ -41,9 +41,8 @@ def run(nsim, nsteps, learner, arms, optimal_arm, is_ucb=True):
             
             learner.update(chosen_arm, reward)
     
-    if is_ucb:
+    if is_thompson:
         result = pd.DataFrame({
-            'conf': confs,
             'sim': epochs,
             'step': runs,
             'chosen_arm': chosen_arms,
@@ -52,13 +51,14 @@ def run(nsim, nsteps, learner, arms, optimal_arm, is_ucb=True):
         })
     else:
         result = pd.DataFrame({
-            'epsilon': epsilons,
+            'epsilon/conf': container,
             'sim': epochs,
             'step': runs,
             'chosen_arm': chosen_arms,
             'optimal_arm': optimal_arms,
             'reward': rewards
         })
+
     return result.reset_index(drop=True)
 
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         mus = np.around(mus / 100., decimals=2)
         arms = [BernoulliArm(p) for p in mus]
         optimal_arm = np.argmax(mus)
-        print(f"Action profile: {[arm.p for arm in arms]}")
+        print(f"Action profile: {mus}")
         print(f"Optimal arm: {optimal_arm}")
     
     else:
@@ -91,14 +91,13 @@ if __name__ == "__main__":
         print(f"Action profile: {mus}")
         print(f"Optimal arm: {optimal_arm}")
 
-
     if cfg.model == 'mab':
         epsilons = [0., 0.01, 0.1, 0.3, 0.5, 1.0]
         
         results = []
         for eps in epsilons:
             learner = eGreedyMAB(n_arms=cfg.n_arms, epsilon=eps, alpha=cfg.alpha, initial=cfg.initial)
-            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm, is_ucb=False)
+            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm, is_ucb=False, is_thompson=False)
             results.append(result)
             
     elif cfg.model == 'ucb':
@@ -107,9 +106,12 @@ if __name__ == "__main__":
         results = []
         for conf in confs:
             learner = UCB(n_arms=cfg.n_arms, conf=conf)
-            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
+            result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm, is_ucb=True, is_thompson=False)
             results.append(result)
-
+    
+    elif cfg.model == 'thompson':
+        learner = ThompsonSampling(n_arms=cfg.n_arms, bernoulli=cfg.bernoulli)
+        results = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm, is_ucb=False, is_thompson=True)
 
     ## save point
     with open(f"./{learner.__class__.__name__}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl", "wb") as f:

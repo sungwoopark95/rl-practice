@@ -25,12 +25,12 @@ class eGreedyMAB(Bandit):
         
     def initialize(self):
         self.counts = np.zeros(self.n_arms)
-        self.returns = np.zeros(self.n_arms) + self.initial
+        self.qs = np.zeros(self.n_arms) + self.initial
         self.epsilon_ = self.epsilon
     
     def choose(self):
         if np.random.random() > self.epsilon_:
-            argmaxes = np.where(self.returns == np.max(self.returns))[0]
+            argmaxes = np.where(self.qs == np.max(self.qs))[0]
             idx = np.random.choice(argmaxes)
         else:
             idx = np.random.choice(self.n_arms)
@@ -41,10 +41,10 @@ class eGreedyMAB(Bandit):
         # reward: reward of the chosen arm
         self.counts[action] += 1
         
-        value = self.returns[action]
+        value = self.qs[action]
         n = self.counts[action]
         new_value = (((n-1)/n)*value) + ((1/n)*reward)
-        self.returns[action] = new_value
+        self.qs[action] = new_value
         
         self.epsilon_ *= self.alpha
         
@@ -78,3 +78,41 @@ class UCB(Bandit):
         n = self.counts[action]
         new_value = (((n-1)/n)*value) + ((1/n)*reward)
         self.qs[action] = new_value
+
+
+class ThompsonSampling(Bandit):
+    def __init__(self, n_arms, bernoulli=cfg.bernoulli):
+        self.n_arms = n_arms
+        if bernoulli:
+            self.bernoulli = True
+        else:
+            self.bernoulli = False
+    
+    def initialize(self):
+        self.counts = np.zeros(shape=self.n_arms)
+        self.qs = np.zeros(shape=self.n_arms)
+        if self.bernoulli:
+            self.alphas = np.ones(shape=self.n_arms)
+            self.betas = np.ones(shape=self.n_arms)
+        else:
+            self.mus = np.zeros(shape=self.n_arms)
+    
+    def choose(self):
+        if self.bernoulli:
+            thetas = np.array([np.random.beta(a=alpha, b=beta) for (alpha, beta) in zip(self.alphas, self.betas)])
+        else:
+            thetas = np.array([np.random.normal(loc=mu, scale=1) for mu in self.mus])
+        argmaxes = np.where(thetas == np.max(thetas))[0]
+        return np.random.choice(argmaxes)
+    
+    def update(self, action, reward):
+        ## reward update
+        value = self.qs[action]
+        self.counts[action] += 1
+        n = self.counts[action]
+        new_value = (((n-1)/n)*value) + ((1/n)*reward)
+        self.qs[action] = new_value
+        
+        ## parameter update
+        self.alphas[action] += reward
+        self.betas[action] += (1-reward)

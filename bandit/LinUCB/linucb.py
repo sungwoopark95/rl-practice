@@ -37,7 +37,7 @@ class LinUCB(ContextualBandit):
             x_ta = np.append(arm_feat, x).reshape((-1, 1))
             theta_a = A_a_inv @ b_a
             p = (theta_a.T @ x_ta) + (self.alpha * np.sqrt(x_ta.T@A_a_inv@x_ta))
-            self.ps[i] = p
+            self.ps[i] = p.item()
 
         max_p = np.max(self.ps)
         tie = np.where(self.ps == max_p)[0]

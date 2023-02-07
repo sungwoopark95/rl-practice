@@ -19,9 +19,9 @@ def run(learner, data, arms, users, nsim):
             unused = []
         cnt = data.shape[0]
         if cfg.tqdm:
-            bar =tqdm(range(data.shape[0]))
+            bar = tqdm(range(data.shape[0]))
         else:
-             bar = range(data.shape[0])
+            bar = range(data.shape[0])
         for i in bar:
             user_id = data['userid'].iloc[i]
             movie_id = data['movieid'].iloc[i]

@@ -13,7 +13,7 @@ def get_cfg():
     parser.add_argument("--seed", type=int, default=None)
     
     parser.add_argument("--model", type=str, 
-                        choices=['mab', 'ucb', 'thompson'], 
+                        choices=['mab', 'ucb', 'thompson', 'etc'], 
                         default='mab')
     
     return parser.parse_args()

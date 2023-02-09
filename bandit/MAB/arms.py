@@ -9,10 +9,10 @@ class Arm(ABC):
 
 class BernoulliArm(Arm):
     def __init__(self, p):
-        self.p = p
+        self.mu = p
     
     def draw(self):
-        if np.random.random() > self.p:
+        if np.random.random() > self.mu:
             return 0.0
         else:
             return 1.0

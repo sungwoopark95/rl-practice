@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from linucb import LinUCB, eLinUCB, HybridLinUCB
+from linucb import LinUCB, eLinUCB, HybridLinUCB, LinTS
 from tqdm.auto import tqdm
 from data import get_data
 from cfg import get_cfg

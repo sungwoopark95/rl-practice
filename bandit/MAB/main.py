@@ -20,6 +20,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
     chosen_arms = []
     optimal_arms = []
     rewards = []
+    optimal_rewards = []
     container = []
     
     if cfg.tqdm:
@@ -37,7 +38,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
                 pass
             else:
                 if model == "ucb":
-                    container.append(learner.conf)
+                    container.append(learner.delta)
                 elif model == "etc":
                     container.append(learner.explore)
                 else:
@@ -47,6 +48,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
             runs.append(step)
             chosen_arms.append(chosen_arm)
             optimal_arms.append(optimal_arm)
+            optimal_rewards.append(arms[optimal_arm].mu)
             rewards.append(reward)
             
             learner.update(chosen_arm, reward)
@@ -57,6 +59,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
             'step': runs,
             'chosen_arm': chosen_arms,
             'optimal_arm': optimal_arms,
+            'optimal_reward': optimal_rewards,
             'reward': rewards
         })
     else:
@@ -66,13 +69,14 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
             'step': runs,
             'chosen_arm': chosen_arms,
             'optimal_arm': optimal_arms,
+            'optimal_reward': optimal_rewards,
             'reward': rewards
         })
 
     return result.reset_index(drop=True)
 
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     if cfg.seed is not None:
         np.random.seed(cfg.seed)
     
@@ -83,20 +87,17 @@ if __name__ == "__main__":
     print(f"{mode} {model_repr[cfg.model.lower()]} with", end=' ')
 
     ## Arm Generation
+    mus = np.random.uniform(low=0., high=10., size=(cfg.n_arms*5))
+    mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
     if cfg.bernoulli:
         print(f"Bernoulli Arm")
-        mus = np.linspace(start=0, stop=10, num=(cfg.n_arms*4))
-        mus = np.random.choice(mus, size=cfg.n_arms, replace=False)
         mus = np.around(mus / 10., decimals=2)
         arms = [BernoulliArm(p) for p in mus]
         optimal_arm = np.argmax(mus)
         print(f"Action profile: {mus}")
         print(f"Optimal arm: {optimal_arm}")
-    
     else:
         print(f"Gaussian Arm")
-        mus = np.linspace(start=-5, stop=5, num=(cfg.n_arms*4))
-        mus = np.around(np.random.choice(mus, size=cfg.n_arms, replace=False), decimals=2)
         mus = np.around(mus / 5., decimals=2)
         arms = [GaussianArm(mu=mu, sigma=1) for mu in mus]
         optimal_arm = np.argmax(mus)
@@ -105,7 +106,7 @@ if __name__ == "__main__":
 
     ## Model
     if cfg.model.lower() == 'mab':
-        epsilons = [0., 0.01, 0.2, 0.5, 1.0]
+        epsilons = [0., 0.01, 0.1, 0.3, 0.5, 1.0]
         results = []
         for eps in epsilons:
             learner = eGreedyMAB(n_arms=cfg.n_arms, epsilon=eps, alpha=cfg.alpha, initial=cfg.initial)
@@ -113,15 +114,15 @@ if __name__ == "__main__":
             results.append(result)
             
     elif cfg.model.lower() == 'ucb':
-        confs = [0., 0.5, 1.0, 2.0, 3.0]
+        deltas = [0.01, 0.1, 0.3, 0.5, 0.9]
         results = []
-        for conf in confs:
-            learner = UCB(n_arms=cfg.n_arms, conf=conf)
+        for delta in deltas:
+            learner = UCB(n_arms=cfg.n_arms, delta=delta, initial=cfg.initial)
             result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
             results.append(result)
     
     elif cfg.model.lower() == 'etc':
-        explores = [0, 10, 50, 100]
+        explores = [0, 10, 25, 50, 100]
         results = []
         for exp in explores:
             learner = ETC(n_arms=cfg.n_arms, explore=exp, horizon=cfg.nsteps)

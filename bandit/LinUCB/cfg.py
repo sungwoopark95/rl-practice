@@ -9,7 +9,7 @@ def get_cfg():
     parser.add_argument("--epsilon", type=float, default=0.1)
     parser.add_argument("--save_plot", action="store_true")
     parser.add_argument("--model", type=str, 
-                        choices=['linucb', 'hybrid', 'elinucb'], 
+                        choices=['linucb', 'hybrid', 'elinucb', 'lints'], 
                         default='linucb')
     
     return parser.parse_args()

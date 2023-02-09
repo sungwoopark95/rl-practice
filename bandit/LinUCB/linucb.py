@@ -130,6 +130,11 @@ class HybridLinUCB(ContextualBandit):
         return np.random.choice(tie)
     
     def update(self, x, a, r):
+        """
+        x: (d-l) shaped 1d-array - user feature
+        a: index of the chosen arm - return value of choose function
+        r: reward yielded from the chosen arm
+        """
         ## update shared parameter - phase 1
         chosenA, chosenB, chosenb = self.As[a], self.Bs[a], self.bs[a]
         chosenA_inv = np.linalg.inv(chosenA)
@@ -155,3 +160,62 @@ class HybridLinUCB(ContextualBandit):
         self.As[a] = chosenA
         self.Bs[a] = chosenB
         self.bs[a] = chosenb
+
+
+## Linear Thompson Sampling
+class LinTS(ContextualBandit):
+    def __init__(self, arms, d, alpha):
+        """
+        arms: K x l matrix, K - the number of actions, l - features of each action
+        d: number of features - l (arm feature) + (d-l) (user feature)
+        alpha: hyper-parameter that controls the variance
+        """
+        self.arms = arms
+        self.n_arms = arms.shape[0]
+        self.d = d
+        self.alpha = alpha
+        
+        ## params for sampling
+        self.Bs = [np.identity(d) for _ in range(self.n_arms)]
+        self.bs = [np.zeros(shape=(d, 1)) for _ in range(self.n_arms)]
+        self.mus = [np.zeros(shape=(d, 1)) for _ in range(self.n_arms)]
+        
+    def choose(self, x):
+        """
+        x: (d-l) shaped 1d-array - user feature
+        return: index of arm which yields the highest payoff
+        """
+        # sampling
+        mu_tilde = [np.random.multivariate_normal(
+            mean=self.mus[i].flatten(),
+            cov=(self.alpha**2) * np.linalg.inv(self.Bs[i])
+        ).reshape(-1, 1) for i in range(self.n_arms)] # list of (d, 1) vectors
+        
+        # context
+        ps = np.zeros(self.n_arms)
+        for i in range(self.n_arms):
+            arm_feat = self.arms[i]
+            context = np.append(arm_feat, x).reshape(-1, 1) # (d, 1)
+            p = (context.T @ mu_tilde[i]).item()
+            ps[i] = p
+            
+        # choose
+        argmaxes = np.where(ps == np.max(ps))[0]
+        return np.random.choice(argmaxes)
+    
+    def update(self, x, a, r):
+        """
+        x: (d-l) shaped 1d-array - user feature
+        a: index of the chosen arm - return value of choose function
+        r: reward yielded from the chosen arm
+        """
+        chosen_context = np.append(self.arms[a], x).reshape(-1, 1)          # (d, 1)
+        chosenB, chosenb = self.Bs[a], self.bs[a]
+        
+        new_chosenB = chosenB + np.outer(chosen_context, chosen_context)    # (d, d)
+        new_chosenb = chosenb + (r * chosen_context)                        # (d, 1)
+        new_chosenmu = np.linalg.inv(new_chosenB) @ new_chosenb
+        
+        self.Bs[a] = new_chosenB
+        self.bs[a] = new_chosenb
+        self.mus[a] = new_chosenmu

@@ -44,6 +44,24 @@ def run(learner, data, arms, users, nsim):
         "cum_reward": cum_reward,
     }
 
+def run_to_plot(model_name, data, arms, users, nsim, alphas):
+    for alpha in alphas:
+        print(f"alpha={alpha}")
+        learner = bandit_init[model_name]
+        result = run(learner, data, arms, users, nsim)
+        plt.plot(result['aligned_ctr'], label=f"alpha={alpha}")
+    
+    plt.axhline(y=reward_mean, color="red")
+    plt.ylim([reward_mean-0.3, 1.05])
+    plt.title(f"{learner.__class__.__name__}")
+    plt.grid(True)
+    plt.legend()
+    plt.xlabel('Step')
+    plt.ylabel('CTR')
+    plt.savefig(f"/home/sungwoopark/rl-practice/bandit/LinUCB/plots/{learner.__class__.__name__}_top{cfg.topN}.png")
+    print("Saved plot successfully!")
+
+
 if __name__ == "__main__":
     ## prepare data and preprocess
     cfg = get_cfg()
@@ -66,50 +84,35 @@ if __name__ == "__main__":
     arm_features = movies.shape[1] - 1
     user_features = users.shape[1] - 1
     d = arm_features + user_features
+    k = arm_features * user_features
     reward_mean = top_n_ratings["reward"].mean()
     print(f"Mean reward: {reward_mean}")
     
     ## training
-    if cfg.model.lower() == "linucb":
-        learner = LinUCB(arms=arm_to_use, d=d, alpha=cfg.alpha)
-        print(learner.__class__.__name__)
-        result = run(
-            learner=learner, 
+    bandit_init = {
+        'linucb': LinUCB(arms=arm_to_use, d=d, alpha=cfg.alpha),
+        'elinucb': eLinUCB(arms=arm_to_use, d=d, alpha=cfg.alpha, epsilon=cfg.epsilon),
+        'hybrid': HybridLinUCB(arms=arm_to_use, d=d, k=k, alpha=cfg.alpha),
+        'lints': LinTS(arms=arm_to_use, d=d, alpha=alpha),
+    }
+    
+    if cfg.model is None:
+        for model in bandit_init.keys():
+            print(f"{model}")
+            run_to_plot(
+                model_name=model,
+                data=top_n_ratings, 
+                arms=top_n_movies,
+                users=users,
+                nsim=cfg.nsim,
+                alphas=alphas
+            )
+    else:
+        run_to_plot(
+            model_name=cfg.model.lower(),
             data=top_n_ratings, 
             arms=top_n_movies,
             users=users,
-            nsim=cfg.nsim
+            nsim=cfg.nsim,
+            alphas=alphas
         )
-        
-    elif cfg.model.lower() == "elinucb":
-        learner = eLinUCB(arms=arm_to_use, d=d, alpha=cfg.alpha, epsilon=cfg.epsilon)
-        print(learner.__class__.__name__)
-        result = run(
-            learner=learner, 
-            data=top_n_ratings, 
-            arms=top_n_movies,
-            users=users,
-            nsim=cfg.nsim
-        )
-        
-    elif cfg.model.lower() == "hybrid":
-        k = arm_features * user_features
-        learner = HybridLinUCB(arms=arm_to_use, d=d, k=k, alpha=cfg.alpha)
-        print(learner.__class__.__name__)
-        result = run(
-            learner=learner, 
-            data=top_n_ratings, 
-            arms=top_n_movies,
-            users=users,
-            nsim=cfg.nsim
-        )
-
-    if cfg.save_plot:
-        plt.figure(figsize=(7, 5))
-        plt.plot(result['aligned_ctr'])
-        plt.axhline(y=reward_mean, color="red")
-        plt.ylim([reward_mean-0.3, 1.05])
-        plt.title(f"{learner.__class__.__name__}_top{cfg.topN}_alpha={cfg.alpha}")
-        plt.grid(True)
-        plt.savefig(f"/home/sungwoopark/rl-practice/bandit/LinUCB/plots/{cfg.model}_top{cfg.topN}_alpha_{cfg.alpha}_nsim_{cfg.nsim}.png")
-        print("Saved plot successfully!")

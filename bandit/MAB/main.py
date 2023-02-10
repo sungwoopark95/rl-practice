@@ -114,7 +114,7 @@ if __name__ == "__main__":
             results.append(result)
             
     elif cfg.model.lower() == 'ucb':
-        confs = [0.01, 0.1, 0.3, 0.5, 0.9]
+        confs = [0.01, 0.1, 0.5, 1., 3.]
         results = []
         for conf in confs:
             learner = UCB(n_arms=cfg.n_arms, conf=conf, initial=cfg.initial)

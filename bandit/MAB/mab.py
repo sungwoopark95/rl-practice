@@ -29,7 +29,8 @@ class eGreedyMAB(Bandit):
         self.epsilon_ = self.epsilon
     
     def choose(self):
-        if np.random.random() > self.epsilon_:
+        p = np.random.uniform(low=0., high=1.)
+        if p > self.epsilon_:
             argmaxes = np.where(self.qs == np.max(self.qs))[0]
             idx = np.random.choice(argmaxes)
         else:
@@ -50,6 +51,7 @@ class eGreedyMAB(Bandit):
         new_value = (((n-1)/n)*value) + ((1/n)*reward)
         self.qs[action] = new_value
         
+        ## epsilon update
         self.epsilon_ *= self.alpha
         
 
@@ -93,9 +95,9 @@ class ETC(Bandit):
 
 
 class UCB(Bandit):
-    def __init__(self, n_arms, delta, initial=cfg.initial):
+    def __init__(self, n_arms, conf, initial=cfg.initial):
         self.n_arms = n_arms
-        self.delta = delta
+        self.conf = conf
         self.initial = initial
     
     def initialize(self):
@@ -111,6 +113,10 @@ class UCB(Bandit):
         return np.random.choice(argmaxes)
     
     def update(self, action, reward):
+        """
+        action: index of the chosen arm
+        reward: reward of the chosen arm
+        """
         ## count update
         self.counts[action] += 1
         
@@ -123,7 +129,7 @@ class UCB(Bandit):
         ## ucb update
         ft = 1 + (self.step*(np.log(self.step)**2))
         numerator = 2 * np.log(ft)
-        self.ucbs[action] = np.sqrt(numerator / n)
+        self.ucbs[action] = self.conf * np.sqrt(numerator / n)
         
 
 class ThompsonSampling(Bandit):
@@ -150,6 +156,10 @@ class ThompsonSampling(Bandit):
         return np.random.choice(argmaxes)
     
     def update(self, action, reward):
+        """
+        action: index of the chosen arm
+        reward: reward of the chosen arm
+        """
         ## count update
         self.counts[action] += 1
         

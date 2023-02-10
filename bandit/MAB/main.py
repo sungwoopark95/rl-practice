@@ -38,7 +38,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
                 pass
             else:
                 if model == "ucb":
-                    container.append(learner.delta)
+                    container.append(learner.conf)
                 elif model == "etc":
                     container.append(learner.explore)
                 else:
@@ -114,10 +114,10 @@ if __name__ == "__main__":
             results.append(result)
             
     elif cfg.model.lower() == 'ucb':
-        deltas = [0.01, 0.1, 0.3, 0.5, 0.9]
+        confs = [0.01, 0.1, 0.3, 0.5, 0.9]
         results = []
-        for delta in deltas:
-            learner = UCB(n_arms=cfg.n_arms, delta=delta, initial=cfg.initial)
+        for conf in confs:
+            learner = UCB(n_arms=cfg.n_arms, conf=conf, initial=cfg.initial)
             result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
             results.append(result)
     

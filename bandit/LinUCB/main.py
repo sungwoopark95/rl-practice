@@ -48,6 +48,7 @@ def run_to_plot(model_name, data, arms, users, nsim, alphas):
     for alpha in alphas:
         print(f"alpha={alpha}")
         learner = bandit_init[model_name]
+        learner.alpha = alpha
         result = run(learner, data, arms, users, nsim)
         plt.plot(result['aligned_ctr'], label=f"alpha={alpha}")
     
@@ -86,17 +87,19 @@ if __name__ == "__main__":
     d = arm_features + user_features
     k = arm_features * user_features
     reward_mean = top_n_ratings["reward"].mean()
+    alphas = [0., 0.5, 1.0, 2.0]
     print(f"Mean reward: {reward_mean}")
     
     ## training
     bandit_init = {
-        'linucb': LinUCB(arms=arm_to_use, d=d, alpha=cfg.alpha),
-        'elinucb': eLinUCB(arms=arm_to_use, d=d, alpha=cfg.alpha, epsilon=cfg.epsilon),
-        'hybrid': HybridLinUCB(arms=arm_to_use, d=d, k=k, alpha=cfg.alpha),
-        'lints': LinTS(arms=arm_to_use, d=d, alpha=alpha),
+        'linucb': LinUCB(arms=arm_to_use, d=d),
+        'elinucb': eLinUCB(arms=arm_to_use, d=d, epsilon=cfg.epsilon),
+        'hybrid': HybridLinUCB(arms=arm_to_use, d=d, k=k),
+        'lints': LinTS(arms=arm_to_use, d=d),
     }
     
     if cfg.model is None:
+        print(f"Simulation on all algorithms")
         for model in bandit_init.keys():
             print(f"{model}")
             run_to_plot(
@@ -108,6 +111,7 @@ if __name__ == "__main__":
                 alphas=alphas
             )
     else:
+        print(f"Simulation on {cfg.model.lower()}")
         run_to_plot(
             model_name=cfg.model.lower(),
             data=top_n_ratings, 

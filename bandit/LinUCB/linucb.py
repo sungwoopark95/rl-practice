@@ -1,5 +1,8 @@
 import numpy as np
 from abc import ABC, abstractmethod
+from cfg import get_cfg
+
+cfg = get_cfg()
 
 class ContextualBandit(ABC):  
     @abstractmethod
@@ -11,11 +14,11 @@ class ContextualBandit(ABC):
 
 ## Disjoint LinUCB
 class LinUCB(ContextualBandit):
-    def __init__(self, arms, d, alpha):
+    def __init__(self, arms, d, alpha=None):
         """
         arms: K x l matrix, K - the number of actions, l - features of each action
         d: number of features - l (arm feature) + (d-l) (user feature)
-        alpha: hyper-parameter that determines degree of exploration
+        alpha: hyper-parameter that determines degree of exploration <- given in the main file
         """
         self.arms = arms
         self.n_arms = arms.shape[0]
@@ -59,7 +62,7 @@ class LinUCB(ContextualBandit):
 
 ## eGreedy LinUCB
 class eLinUCB(LinUCB):
-    def __init__(self, arms, d, alpha, epsilon):
+    def __init__(self, arms, d, alpha=None, epsilon=cfg.epsilon):
         super().__init__(arms, d, alpha)
         self.epsilon = epsilon
            
@@ -76,11 +79,11 @@ class eLinUCB(LinUCB):
 
 ## Hybrid LinUCB
 class HybridLinUCB(ContextualBandit):
-    def __init__(self, arms, d, k, alpha=1.):
+    def __init__(self, arms, d, k, alpha=None):
         """
         arms: K x l matrix, K - the number of actions, l - features of each action
         d: number of features - l (arm feature) + (d-l) (user feature)
-        alpha: hyper-parameter that determines degree of exploration
+        alpha: hyper-parameter that determines degree of exploration <- given in the main file
         k: dimension of the shared parameter -> l (arm feature) * (d-l) (user feature)
         """
         self.arms = arms
@@ -164,11 +167,11 @@ class HybridLinUCB(ContextualBandit):
 
 ## Linear Thompson Sampling
 class LinTS(ContextualBandit):
-    def __init__(self, arms, d, alpha):
+    def __init__(self, arms, d, alpha=None):
         """
         arms: K x l matrix, K - the number of actions, l - features of each action
         d: number of features - l (arm feature) + (d-l) (user feature)
-        alpha: hyper-parameter that controls the variance
+        alpha: hyper-parameter that controls the variance <- given in the main file
         """
         self.arms = arms
         self.n_arms = arms.shape[0]

@@ -3,6 +3,7 @@ from linucb import LinUCB, eLinUCB, HybridLinUCB, LinTS
 from tqdm.auto import tqdm
 from data import get_data
 from cfg import get_cfg
+from datetime import datetime
 
 def run(learner, data, arms, users, nsim):
     aligned_ctr = []
@@ -45,6 +46,7 @@ def run(learner, data, arms, users, nsim):
     }
 
 def run_to_plot(model_name, data, arms, users, nsim, alphas):
+    plt.figure(figsize=(6, 5))
     for alpha in alphas:
         print(f"alpha={alpha}")
         learner = bandit_init[model_name]
@@ -59,8 +61,9 @@ def run_to_plot(model_name, data, arms, users, nsim, alphas):
     plt.legend()
     plt.xlabel('Step')
     plt.ylabel('CTR')
-    plt.savefig(f"/home/sungwoopark/rl-practice/bandit/LinUCB/plots/{learner.__class__.__name__}_top{cfg.topN}.png")
-    print("Saved plot successfully!")
+    now = datetime.now()
+    plt.savefig(f"/home/sungwoopark/rl-practice/bandit/LinUCB/plots/{learner.__class__.__name__}_top{cfg.topN}_{now}.png")
+    print(f"Saved plot successfully at {now}!")
 
 
 if __name__ == "__main__":

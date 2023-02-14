@@ -94,20 +94,17 @@ class ETC(Bandit):
         self.qs[action] = new_value
 
 
-class UCB(Bandit):
-    def __init__(self, n_arms, conf, initial=cfg.initial):
+class UCBDelta(Bandit):
+    def __init__(self, n_arms, delta):
         self.n_arms = n_arms
-        self.conf = conf
-        self.initial = initial
+        self.delta = delta
     
     def initialize(self):
         self.counts = np.zeros(self.n_arms)
-        self.qs = np.zeros(self.n_arms) + self.initial
+        self.qs = np.zeros(self.n_arms)
         self.ucbs = np.array([np.iinfo(np.int32).max for _ in range(self.n_arms)])
-        self.step = 0
     
     def choose(self):
-        self.step += 1
         returns = self.qs + self.ucbs
         argmaxes = np.where(returns == np.max(returns))[0]
         return np.random.choice(argmaxes)
@@ -127,10 +124,62 @@ class UCB(Bandit):
         self.qs[action] = new_value
         
         ## ucb update
-        ft = 1 + (self.step*(np.log(self.step)**2))
-        numerator = 2 * np.log(ft)
-        self.ucbs[action] = self.conf * np.sqrt(numerator / n)
+        numerator = 2 * np.log(1/self.delta)
+        self.ucbs[action] = np.sqrt(numerator / self.counts[action])
         
+        
+class UCBAsymptotic(UCBDelta):
+    def __init__(self, n_arms):
+        self.n_arms = n_arms
+        
+    def initialize(self):
+        super().initialize()
+        self.step = 0
+    
+    def update(self, action, reward):
+        """
+        action: index of the chosen arm
+        reward: reward of the chosen arm
+        """
+        ## count update
+        self.counts[action] += 1
+        
+        ## q update
+        value = self.qs[action]
+        n = self.counts[action]
+        new_value = (((n-1)/n)*value) + ((1/n)*reward)
+        self.qs[action] = new_value
+        
+        ## ucb update
+        ft = 1 + (self.step * (np.log(self.step)**2))
+        numerator = 2 * np.log(ft)
+        self.ucbs[action] = np.sqrt(numerator / self.counts[action])
+        
+
+class UCBMOSS(UCBDelta):
+    def __init__(self, n_arms, nsim=cfg.nsim):
+        self.n_arms = n_arms
+        self.nsim = nsim
+        
+    def update(self, action, reward):
+        """
+        action: index of the chosen arm
+        reward: reward of the chosen arm
+        """
+        ## count update
+        self.counts[action] += 1
+        
+        ## q update
+        value = self.qs[action]
+        n = self.counts[action]
+        new_value = (((n-1)/n)*value) + ((1/n)*reward)
+        self.qs[action] = new_value
+        
+        ## ucb update
+        left = 4 / n
+        right = np.log(np.maximum(1, (self.nsim / (self.arms*n))))
+        self.ucbs[action] = np.sqrt(left * right)
+                
 
 class ThompsonSampling(Bandit):
     def __init__(self, n_arms, bernoulli=cfg.bernoulli):

@@ -56,7 +56,7 @@ def run_to_plot(model_name, data, arms, users, nsim, alphas):
     
     plt.axhline(y=reward_mean, color="red")
     plt.ylim([reward_mean-0.3, 1.05])
-    plt.title(f"{learner.__class__.__name__} top{cfg.topN} NSim={nsim}")
+    plt.title(f"{learner.__class__.__name__} top{cfg.topN} NSim={cfg.nsim}")
     plt.grid(True)
     plt.legend()
     plt.xlabel('Step')

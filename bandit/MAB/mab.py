@@ -94,20 +94,46 @@ class ETC(Bandit):
         self.qs[action] = new_value
 
 
-class UCBDelta(Bandit):
-    def __init__(self, n_arms, delta):
+class UCBNaive(Bandit):
+    def __init__(self, n_arms, c):
         self.n_arms = n_arms
-        self.delta = delta
+        self.c = c
     
     def initialize(self):
         self.counts = np.zeros(self.n_arms)
         self.qs = np.zeros(self.n_arms)
         self.ucbs = np.array([np.iinfo(np.int32).max for _ in range(self.n_arms)])
+        self.step = 0
     
     def choose(self):
+        self.step += 1
         returns = self.qs + self.ucbs
         argmaxes = np.where(returns == np.max(returns))[0]
         return np.random.choice(argmaxes)
+    
+    def update(self, action, reward):
+        """
+        action: index of the chosen arm
+        reward: reward of the chosen arm
+        """
+        ## count update
+        self.counts[action] += 1
+        
+        ## q update
+        value = self.qs[action]
+        n = self.counts[action]
+        new_value = (((n-1)/n)*value) + ((1/n)*reward)
+        self.qs[action] = new_value
+        
+        ## ucb update
+        inside = np.log(self.step) / n
+        self.ucbs[action] = self.c * np.sqrt(inside)
+
+
+class UCBDelta(UCBNaive):
+    def __init__(self, n_arms, delta):
+        self.n_arms = n_arms
+        self.delta = delta
     
     def update(self, action, reward):
         """
@@ -128,13 +154,9 @@ class UCBDelta(Bandit):
         self.ucbs[action] = np.sqrt(numerator / self.counts[action])
         
         
-class UCBAsymptotic(UCBDelta):
+class UCBAsymptotic(UCBNaive):
     def __init__(self, n_arms):
         self.n_arms = n_arms
-        
-    def initialize(self):
-        super().initialize()
-        self.step = 0
     
     def update(self, action, reward):
         """
@@ -156,7 +178,7 @@ class UCBAsymptotic(UCBDelta):
         self.ucbs[action] = np.sqrt(numerator / self.counts[action])
         
 
-class UCBMOSS(UCBDelta):
+class UCBMOSS(UCBNaive):
     def __init__(self, n_arms, nsim=cfg.nsim):
         self.n_arms = n_arms
         self.nsim = nsim
@@ -177,9 +199,9 @@ class UCBMOSS(UCBDelta):
         
         ## ucb update
         left = 4 / n
-        right = np.log(np.maximum(1, (self.nsim / (self.arms*n))))
+        right = np.log(np.maximum(1, (self.nsim / (self.n_arms*n))))
         self.ucbs[action] = np.sqrt(left * right)
-                
+
 
 class ThompsonSampling(Bandit):
     def __init__(self, n_arms, bernoulli=cfg.bernoulli):

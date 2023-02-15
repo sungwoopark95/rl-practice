@@ -6,14 +6,20 @@ def get_cfg():
     parser.add_argument("--nsim", type=int, default=1, help="Number of simulations")
     parser.add_argument("--nsteps", type=int, default=1000, help="Runs in each simulation")
     parser.add_argument("--bernoulli", action='store_true')
+    parser.add_argument("--is_definite", action='store_true')
     parser.add_argument("--n_arms", type=int, default=2)
     parser.add_argument("--alpha", type=float, default=1.)
     parser.add_argument("--initial", type=float, default=0.)
-    parser.add_argument("--conf", type=float, default=2.)
-    parser.add_argument("--seed", type=int, default=None)
     
     parser.add_argument("--model", type=str, 
-                        choices=['mab', 'ucb', 'thompson', 'etc'], 
-                        default='mab')
+                        choices=[
+                            'mab', 
+                            'ucbnaive',
+                            'ucbdelta',
+                            'ucbasym',
+                            'ucbmoss', 
+                            'thompson', 
+                            'etc'
+                        ])
     
     return parser.parse_args()

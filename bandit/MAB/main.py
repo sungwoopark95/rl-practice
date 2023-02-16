@@ -91,10 +91,10 @@ if __name__ == "__main__":
     ## Arm Generation
     if cfg.is_definite:
         print("definite", end=' ')
-        mus = (np.linspace(start=1., stop=99., num=cfg.n_arms)) / 100.
+        mus = np.append((np.linspace(start=1., stop=30., num=cfg.n_arms-1)) / 100., 0.9)
     else:
         print("ambiguous", end=' ')
-        mus = (np.linspace(start=8., stop=9., num=cfg.n_arms)) / 10.
+        mus = (np.linspace(start=7., stop=9., num=cfg.n_arms)) / 10.
     mus = np.around(mus, decimals=2)
     np.random.shuffle(mus)
     if cfg.bernoulli:

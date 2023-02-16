@@ -137,11 +137,11 @@ if __name__ == "__main__":
  
     elif cfg.model.lower() == 'ucbasym':
         learner = UCBAsymptotic(n_arms=cfg.n_arms)
-        results = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
+        results = [run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)]
     
     elif cfg.model.lower() == 'ucbmoss':
         learner = UCBMOSS(n_arms=cfg.n_arms, nsim=cfg.nsim)
-        results = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
+        results = [run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)]
     
     elif cfg.model.lower() == 'etc':
         explores = [0, 10, 25, 50]
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     
     elif cfg.model.lower() == 'thompson':
         learner = ThompsonSampling(n_arms=cfg.n_arms, bernoulli=cfg.bernoulli)
-        results = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
+        results = [run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)]
 
     ## save point
     if cfg.is_definite:

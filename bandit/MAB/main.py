@@ -91,10 +91,10 @@ if __name__ == "__main__":
     ## Arm Generation
     if cfg.is_definite:
         print("definite", end=' ')
-        mus = np.append((np.linspace(start=1., stop=30., num=cfg.n_arms-1)) / 100., 0.9)
+        mus = np.append((np.linspace(start=1., stop=25., num=cfg.n_arms-1)) / 100., 0.9)
     else:
         print("ambiguous", end=' ')
-        mus = (np.linspace(start=7., stop=9., num=cfg.n_arms)) / 10.
+        mus = (np.linspace(start=65., stop=99., num=cfg.n_arms)) / 100.
     mus = np.around(mus, decimals=2)
     np.random.shuffle(mus)
     if cfg.bernoulli:
@@ -120,7 +120,7 @@ if __name__ == "__main__":
             results.append(result)
             
     elif cfg.model.lower() == 'ucbnaive':
-        confs = [0.01, 0.1, 0.5, 1., 3.]
+        confs = [0.01, 0.5, 1., 2., 3.]
         results = []
         for conf in confs:
             learner = UCBNaive(n_arms=cfg.n_arms, c=conf)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
             results.append(result)
 
     elif cfg.model.lower() == 'ucbdelta':
-        deltas = [0.01, 0.1, 0.5, 0.9, 0.99]
+        deltas = [(1/(cfg.nsim)**2), 0.01, 0.1, 0.5, 0.9, 0.99]
         results = []
         for d in deltas:
             learner = UCBDelta(n_arms=cfg.n_arms, delta=d)

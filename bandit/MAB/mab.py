@@ -58,7 +58,7 @@ class eGreedyMAB(Bandit):
 class ETC(Bandit):
     ## Explore-then-commit Bandit
     def __init__(self, n_arms, explore, horizon=cfg.nsteps, initial=cfg.initial):
-        assert explore * n_arms < horizon
+        assert explore * n_arms <= horizon
         self.n_arms = n_arms
         self.initial = initial  # set to 0 by default
         self.explore = explore

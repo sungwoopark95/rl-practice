@@ -23,6 +23,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
     chosen_arms = []
     optimal_arms = []
     rewards = []
+    mean_rewards = []
     optimal_rewards = []
     container = []
     
@@ -54,6 +55,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
             chosen_arms.append(chosen_arm)
             optimal_arms.append(optimal_arm)
             optimal_rewards.append(arms[optimal_arm].mu)
+            mean_rewards.append(arms[chosen_arm].mu)
             rewards.append(reward)
             
             learner.update(chosen_arm, reward)
@@ -65,6 +67,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
             'chosen_arm': chosen_arms,
             'optimal_arm': optimal_arms,
             'optimal_reward': optimal_rewards,
+            'mean_reward': mean_rewards,
             'reward': rewards
         })
     else:
@@ -75,6 +78,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
             'chosen_arm': chosen_arms,
             'optimal_arm': optimal_arms,
             'optimal_reward': optimal_rewards,
+            'mean_reward': mean_rewards,
             'reward': rewards
         })
 

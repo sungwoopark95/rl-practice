@@ -179,8 +179,8 @@ class LinTS(ContextualBandit):
         self.alpha = alpha
         
         ## params for sampling
-        self.Bs = [np.identity(d) for _ in range(self.n_arms)]
-        self.bs = [np.zeros(shape=(d, 1)) for _ in range(self.n_arms)]
+        self.Bs = [np.identity(d) for _ in range(self.n_arms)]          # array of covariance matrices
+        self.bs = [np.zeros(shape=(d, 1)) for _ in range(self.n_arms)]  # parameter for updating mu
         self.mus = [np.zeros(shape=(d, 1)) for _ in range(self.n_arms)]
         
     def choose(self, x):
@@ -189,7 +189,7 @@ class LinTS(ContextualBandit):
         return: index of arm which yields the highest payoff
         """
         # sampling
-        mu_tilde = [np.random.multivariate_normal(
+        theta = [np.random.multivariate_normal(
             mean=self.mus[i].flatten(),
             cov=(self.alpha**2) * np.linalg.inv(self.Bs[i])
         ).reshape(-1, 1) for i in range(self.n_arms)] # list of (d, 1) vectors
@@ -199,7 +199,7 @@ class LinTS(ContextualBandit):
         for i in range(self.n_arms):
             arm_feat = self.arms[i]
             context = np.append(arm_feat, x).reshape(-1, 1) # (d, 1)
-            p = (context.T @ mu_tilde[i]).item()
+            p = (context.T @ theta[i]).item()
             ps[i] = p
             
         # choose

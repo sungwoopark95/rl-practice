@@ -12,5 +12,7 @@ indefinite/
 *.out
 *.pkl
 *.pdf
+*.zip
+*.txt
 
 /home/sungwoopark/rl-practice/bandit/MAB/test.ipynb

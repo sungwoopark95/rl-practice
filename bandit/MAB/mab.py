@@ -95,9 +95,11 @@ class ETC(Bandit):
 
 
 class UCBNaive(Bandit):
-    def __init__(self, n_arms, c):
+    def __init__(self, n_arms:int, sigma:float, alpha:float, delta:float=0.1):
         self.n_arms = n_arms
-        self.c = c
+        self.alpha = alpha
+        self.delta = delta
+        self.sigma = sigma
     
     def initialize(self):
         self.counts = np.zeros(self.n_arms)
@@ -126,8 +128,8 @@ class UCBNaive(Bandit):
         self.qs[action] = new_value
         
         ## ucb update
-        inside = np.log(self.step) / n
-        self.ucbs[action] = self.c * np.sqrt(inside)
+        inside = 2 * (self.sigma ** 2) * np.log(self.step/self.delta)
+        self.ucbs[action] = self.alpha * np.sqrt(inside)
 
 
 class UCBDelta(UCBNaive):

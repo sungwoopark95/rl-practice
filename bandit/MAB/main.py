@@ -5,6 +5,7 @@ from mab import *
 from arms import BernoulliArm, GaussianArm
 from tqdm.auto import tqdm
 import pickle
+import os
 
 cfg = get_cfg()
 model_repr = {
@@ -27,14 +28,15 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
     optimal_rewards = []
     container = []
     
-    if cfg.tqdm:
-        bar = tqdm(range(nsim))
-    else:
-        bar = range(nsim)
-    
-    for sim in bar:
+    for sim in range(nsim):
         learner.initialize()
-        for step in range(nsteps):
+        
+        if cfg.tqdm:
+            bar = tqdm(range(nsteps))
+        else:
+            bar = range(nsim)
+            
+        for step in bar:
             chosen_arm = learner.choose()
             reward = arms[chosen_arm].draw()
             
@@ -42,7 +44,7 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
                 pass
             else:
                 if model == "ucbnaive":
-                    container.append(learner.c)
+                    container.append(learner.n_arms)
                 elif model == "etc":
                     container.append(learner.explore)
                 elif model == "mab":
@@ -86,6 +88,8 @@ def run(nsim, nsteps, learner, arms, optimal_arm, model=cfg.model.lower()):
 
 
 if __name__ == "__main__":
+    SEED = cfg.seed
+    
     if cfg.initial > 0:
         mode = "Optimistic"
     else:
@@ -110,9 +114,9 @@ if __name__ == "__main__":
     else:
         print(f"Gaussian arms")
         arms = [GaussianArm(mu=mu, sigma=1) for mu in mus]
-        optimal_arm = np.argmax(mus)
-        print(f"Action profile: {mus}")
-        print(f"Optimal arm: {optimal_arm}")
+        # optimal_arm = np.argmax(mus)
+        # print(f"Action profile: {mus}")
+        # print(f"Optimal arm: {optimal_arm}")
 
     ## Model
     if cfg.model.lower() == 'mab':
@@ -124,10 +128,26 @@ if __name__ == "__main__":
             results.append(result)
             
     elif cfg.model.lower() == 'ucbnaive':
-        confs = [0.01, 0.5, 1., 2., 3.]
+        # alphas = [0.01, 0.1, 0.3, 0.5, 1., 1.5]
+        # results = []
+        # for alpha in alphas:
+        #     learner = UCBNaive(n_arms=cfg.n_arms, alpha=alpha)
+        #     result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
+        #     results.append(result)
+        arms = [10, 20, 30, 40, 50]
         results = []
-        for conf in confs:
-            learner = UCBNaive(n_arms=cfg.n_arms, c=conf)
+        for arm in arms:
+            if SEED:
+                SEED_ = SEED + (137 * arm)
+                np.random.seed(SEED_)
+            mus = np.random.uniform(low=0., high=1., size=arm)
+            # print(f"Actions : {mus}")
+            noise_std = 0.1
+            arms = [GaussianArm(mu=mu, sigma=noise_std) for mu in mus]
+            optimal_arm = np.argmax(mus)
+            print(f"|A| = {arm}, Optimal arm: {optimal_arm}, \u03B1={cfg.alpha}")
+            
+            learner = UCBNaive(n_arms=arm, sigma=noise_std, alpha=cfg.alpha)
             result = run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)
             results.append(result)
 
@@ -160,11 +180,15 @@ if __name__ == "__main__":
         results = [run(nsim=cfg.nsim, nsteps=cfg.nsteps, learner=learner, arms=arms, optimal_arm=optimal_arm)]
 
     ## save point
-    if cfg.is_definite:
-        fname = f"/home/sungwoopark/rl-practice/bandit/MAB/definite/{learner.__class__.__name__}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl"
-    else:
-        fname = f"/home/sungwoopark/rl-practice/bandit/MAB/indefinite/{learner.__class__.__name__}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl"
+    # if cfg.is_definite:
+    #     fname = f"/home/sungwoopark/rl-practice/bandit/MAB/definite/{learner.__class__.__name__}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl"
+    # else:
+    #     fname = f"/home/sungwoopark/rl-practice/bandit/MAB/indefinite/{learner.__class__.__name__}_{arms[0].__class__.__name__}_{cfg.alpha}_{mode}_results.pkl"
     
+    PATH = "/Users/sungwoo/ppatteori109@gmail.com - Google Drive/내 드라이브/GSDS/ohlab/Research/latent-context/MAB-results"
+    os.makedirs(PATH, exist_ok=True)
+    fname = f"{PATH}/bernoulli_{cfg.bernoulli}_arms_seed_{SEED}.pkl"
     with open(fname, "wb") as f:
         pickle.dump(results, file=f, protocol=pickle.HIGHEST_PROTOCOL)
+    print("Save done!")
     

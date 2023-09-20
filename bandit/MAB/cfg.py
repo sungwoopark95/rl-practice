@@ -10,6 +10,7 @@ def get_cfg():
     parser.add_argument("--n_arms", type=int, default=2)
     parser.add_argument("--alpha", type=float, default=1.)
     parser.add_argument("--initial", type=float, default=0.)
+    parser.add_argument("--seed", type=int, default=None)
     
     parser.add_argument("--model", type=str, 
                         choices=[
